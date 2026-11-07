@@ -13,37 +13,35 @@ pub async fn upload_to_ipfs(file_path: &str) -> Result<String, String> {
         return Err(format!("File not found: {}", file_path));
     }
 
-    // Read the entire file into bytes
     let bytes = tokio::fs::read(path)
         .await
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
-    // Extract file name
     let file_name = path.file_name()
         .unwrap_or_default()
         .to_string_lossy()
         .to_string();
 
-    // Build the multipart form using Part::bytes
+
     let form = reqwest::multipart::Form::new()
         .part("file", reqwest::multipart::Part::bytes(bytes).file_name(file_name));
 
-    // Send the POST request
+
     let resp = client().post(url)
         .multipart(form)
         .send()
         .await
         .map_err(|e| format!("Failed to send request to IPFS: {}", e))?;
 
-    // Check HTTP status code FIRST (status() only borrows, doesn't consume resp)
+
     let status = resp.status();
     if !status.is_success() {
-        // Now it's safe to consume resp to get the error text
+
         let err_text = resp.text().await.unwrap_or_default();
         return Err(format!("IPFS API error (HTTP {}): {}", status, err_text));
     }
 
-    // IPFS returns NDJSON (Newline Delimited JSON), parse the first line
+
     let text = resp.text()
         .await
         .map_err(|e| format!("Failed to read response text: {}", e))?;
@@ -69,7 +67,7 @@ pub async fn download_from_ipfs(cid: &str, output_path: &str) -> Result<(), Stri
         .await
         .map_err(|e| format!("Failed to request IPFS node: {}", e))?;
 
-    // Check HTTP status code
+
     let status = resp.status();
     if !status.is_success() {
         let err_text = resp.text().await.unwrap_or_default();
@@ -96,7 +94,7 @@ pub async fn pin_file(cid: &str) -> Result<(), String> {
         .await
         .map_err(|e| format!("Failed to request IPFS node: {}", e))?;
 
-    // Check HTTP status code
+
     let status = resp.status();
     if !status.is_success() {
         let err_text = resp.text().await.unwrap_or_default();
