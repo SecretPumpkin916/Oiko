@@ -1,2 +1,0 @@
-ipfs init
-ipfs daemon
